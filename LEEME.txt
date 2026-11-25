@@ -1,0 +1,27 @@
+PORTAL DE RECORRIDOS VIRTUALES - REGIÓN DEL BIOBÍO
+====================================================
+
+Página de inicio con un mapa de la zona de Concepción, que marca los dos
+circuitos (Coyanmahuida en verde y Humedal Los Batros en azul), y una
+ficha de cada uno con el botón "Entrar al recorrido".
+Al tocar un punto del mapa, aparece un recuadro con el trazado del circuito.
+
+ARCHIVOS
+  index.html     página del portal (no necesita servidor)
+  logo-citt.png  logo "Desarrollado por"
+  c_coyan.jpg    portada de Coyanmahuida
+  c_batros.jpg   portada de Los Batros
+  logo-com.png, logo-inf.png  logos de las escuelas participantes
+  fonts\         tipografías Lato y Merriweather (identidad web Duoc UC)
+
+ENLACES A LOS RECORRIDOS
+  Los botones ya apuntan a los recorridos publicados en GitHub Pages:
+      Coyanmahuida: https://ggalanc1983.github.io/coyanmahuida/
+      Los Batros:   https://ggalanc1983.github.io/LosBatros/
+  Si alguno cambia de dirección, abre index.html con el Bloc de notas, busca
+  el bloque marcado con "Configuración" (cerca de la línea 115) y cambia su "url".
+
+AGREGAR UN TERCER RECORRIDO
+  En el mismo bloque TOURS, copia una de las entradas y cambia el nombre,
+  la url, la imagen, las coordenadas "at: [latitud, longitud]" y los datos.
+  Si queda fuera del mapa, avísame y se amplía el área del mapa.

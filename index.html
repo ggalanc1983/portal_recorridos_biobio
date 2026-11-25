@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorridos virtuales Biobío</title>
+<style>
+/*
+VOICE: invitación tranquila a explorar la naturaleza del Biobío; clara y sin adornos.
+IDEA: folleto-mapa de senderos con la identidad Duoc UC — bandas negras arriba y abajo, acento amarillo, contenido sobre blanco.
+COLOUR and TYPE (Manual de Identidad Corporativa Duoc UC 2024, paleta web): amarillo #F1B634 (Pantone 1235 C), negro #1A1A1A, gris #666666, blanco;
+  recorridos con colores de la paleta web: verde #6DAC3B (Coyanmahuida) y azul #4E7CDD (Los Batros). Tipografía web: Lato (texto) y Merriweather (llamados a la acción).
+*/
+@font-face{font-family:Lato;src:url(fonts/lato-latin-400-normal.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Lato;src:url(fonts/lato-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:Lato;src:url(fonts/lato-latin-900-normal.woff2) format('woff2');font-weight:900;font-display:swap}
+@font-face{font-family:Merriweather;src:url(fonts/merriweather-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:swap}
+:root{--yellow:#F1B634;--black:#1A1A1A;--gray:#666666;--bg:#F4F4F4;--white:#FFFFFF;--line:#DDDDDD;--sea:#DCEEF8;--land:#FFFFFF;--green:#6DAC3B;--blue:#4E7CDD}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--black);font:16px/1.55 Lato,Arial,sans-serif;overflow-x:clip}
+a{color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 max(4vw,16px)}
+header.top{background:var(--black);color:var(--white);border-bottom:5px solid var(--yellow)}
+header.top .wrap{padding-top:clamp(28px,4vw,52px);padding-bottom:clamp(24px,3vw,40px)}
+.eyebrow{color:var(--yellow);font-weight:900;font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}
+h1{margin:0;font-size:clamp(34px,5.2vw,54px);line-height:1.06;font-weight:900;letter-spacing:-.01em;text-wrap:balance}
+.lede{margin:12px 0 0;max-width:62ch;color:#D6D6D6;font-size:17px}
+main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;padding:28px 0 36px}
+.mapbox{position:relative;background:var(--sea);border:1px solid var(--line);border-radius:14px;overflow:hidden;aspect-ratio:760/713;align-self:start;position:sticky;top:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+#map{display:block;width:100%;height:100%;position:absolute;inset:0}
+#map .land{fill:var(--land);stroke:#B9C4CA;stroke-width:1.2}
+#map .grid{stroke:rgba(26,26,26,.05);stroke-width:1}
+#map .city circle{fill:var(--gray)}
+#map .city text{font:700 14px Lato,Arial,sans-serif;fill:var(--gray);paint-order:stroke;stroke:#fff;stroke-width:3px}
+#map .sea{font:italic 700 15px Lato,Arial,sans-serif;fill:rgba(78,124,221,.55);letter-spacing:.08em}
+.pin{cursor:pointer;outline:none}
+.pin:focus-visible .dot{stroke:var(--yellow);stroke-width:4}
+.pin .halo{opacity:.35}
+.pin text{font:900 17px Lato,Arial,sans-serif;paint-order:stroke;stroke:#fff;stroke-width:4px}
+.pin:hover .dot,.pin.on .dot{r:11}
+@media (prefers-reduced-motion:no-preference){.pin .halo{animation:pulse 2.4s ease-out infinite;transform-box:fill-box;transform-origin:center}}
+@keyframes pulse{from{transform:scale(.6);opacity:.6}to{transform:scale(1.8);opacity:0}}
+.maplegend{position:absolute;left:14px;bottom:12px;display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--black);background:rgba(255,255,255,.9);padding:6px 10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.maplegend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.maplegend .hint{color:var(--gray)}
+.inset{position:absolute;right:12px;bottom:56px;width:min(240px,40%);background:#fff;border:1px solid var(--line);border-top:4px solid var(--yellow);border-radius:10px;padding:10px 12px 8px;box-shadow:0 6px 18px rgba(0,0,0,.14);transition:opacity .25s}
+.inset[hidden]{display:block;opacity:0;pointer-events:none}
+.inset h3{margin:0;font-size:14px;font-weight:900;padding-right:24px}.inset h3 small{font-weight:400;color:var(--gray);margin-left:6px}
+.inset svg{display:block;width:100%;height:auto;margin-top:6px}
+.inset .x{all:unset;cursor:pointer;position:absolute;right:6px;top:4px;width:30px;height:30px;display:grid;place-items:center;color:var(--gray);border-radius:8px}
+.inset .x:hover{background:#F0F0F0}
+.inset .x:focus-visible,.btn:focus-visible,.ghost:focus-visible{outline:3px solid var(--black);outline-offset:2px}
+.cards{display:grid;gap:18px;align-content:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.card.on{border-color:var(--c);box-shadow:0 0 0 2px var(--c)}
+.card img{display:block;width:100%;aspect-ratio:16/7;object-fit:cover}
+.card .body{padding:16px 18px 18px}
+.tag{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--c)}
+.tag i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.card h2{margin:4px 0 2px;font-size:26px;line-height:1.1;font-weight:900}
+.card p.desc{margin:10px 0 12px;font-size:15.5px;color:#333}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px;padding:0;list-style:none}
+.facts li{border-top:3px solid var(--c);padding-top:6px}
+.facts b{display:block;font-size:20px;line-height:1.1;white-space:nowrap;font-weight:900}
+.facts span{font-size:13px;color:var(--gray)}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 20px;border-radius:8px;font:700 15px Merriweather,Georgia,serif;text-decoration:none;background:var(--yellow);color:var(--black)}
+.btn:hover{background:#E5A71F}
+.btn svg{width:16px;height:16px;fill:currentColor;stroke:none}
+.ghost{all:unset;cursor:pointer;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--black);font-weight:700}
+.ghost:hover{background:var(--black);color:#fff}
+footer{background:var(--black);color:#CFCFCF;font-size:14px;border-top:5px solid var(--yellow)}
+footer .wrap{padding-top:24px;padding-bottom:30px;display:flex;flex-direction:column;gap:18px}
+footer .made{display:flex;align-items:center;gap:12px}
+footer img{width:190px;height:auto}
+footer .credits{display:flex;flex-wrap:wrap;align-items:center;gap:16px 36px;width:100%}
+footer .schools{display:flex;gap:12px;flex-wrap:wrap}
+footer .schools img{width:150px}
+@media (max-width:600px){footer .made{flex-wrap:wrap}footer .schools img{width:140px}}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr)}.mapbox{position:relative;top:0}}
+@media (max-width:600px){.inset{width:48%;bottom:44px;padding:6px 8px}.inset h3{font-size:12px}.maplegend .hint{display:none}.maplegend{font-size:12px;gap:10px;bottom:8px;left:8px}#map .city text{font-size:22px}.pin text{font-size:28px}#map .sea{font-size:20px}}
+@media (max-width:520px){.facts b{font-size:17px}h1{font-size:34px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <p class="eyebrow">Recorridos virtuales 360°</p>
+  <h1>Naturaleza de la Región del Biobío</h1>
+  <p class="lede">Dos recorridos para conocer, desde cualquier lugar, un bosque nativo que se recupera del fuego y un humedal urbano que es santuario de aves. Elige un recorrido en el mapa o en las fichas.</p>
+</div></header>
+<div class="wrap">
+<main>
+  <section class="mapbox" aria-label="Mapa de los recorridos">
+    <svg id="map" role="img" aria-label="Mapa de la costa del Gran Concepción con los dos recorridos"></svg>
+    <div class="inset" id="inset" hidden>
+      <button class="x" id="insetClose" aria-label="Cerrar acercamiento">✕</button>
+      <h3 id="insetTitle"></h3>
+      <svg id="insetSvg" viewBox="0 0 240 200"></svg>
+    </div>
+    <div class="maplegend"><span><i style="background:var(--green)"></i>Coyanmahuida</span><span><i style="background:var(--blue)"></i>Los Batros</span><span class="hint">Toca un punto para ver el circuito</span></div>
+  </section>
+  <div class="cards" id="cards"></div>
+</main>
+</div>
+<footer><div class="wrap">
+  <span>Los recorridos funcionan en computador, celular y visor VR con navegador. Usa audífonos para el sonido ambiente.</span>
+  <div class="credits">
+    <span class="made">Desarrollado por <img src="logo-citt.png" alt="CITT Duoc UC — Centro de Innovación y Transferencia Tecnológica"></span>
+    <span class="made part">Participan <span class="schools"><img src="logo-com.png" alt="Duoc UC Escuela de Comunicación"><img src="logo-inf.png" alt="Duoc UC Escuela de Informática y Telecomunicaciones"></span></span>
+  </div>
+</div></footer>
+
+<script>
+{
+// ===== Configuración: cambia "url" si los recorridos se publican en otra dirección =====
+const TOURS = [
+  { id: 'coyan', name: 'Parque Coyanmahuida', place: 'Florida · bosque nativo', color: 'var(--green)', hex: '#6DAC3B',
+    url: 'https://ggalanc1983.github.io/coyanmahuida/', img: 'c_coyan.jpg', at: [-36.8240, -72.7313], label: 'Coyanmahuida', dx: 0, dy: -20, anchor: 'middle',
+    desc: 'Un sendero entre robles, peumos y lianas, en uno de los últimos fragmentos de bosque caducifolio de la zona. Sobrevivió al incendio de 2017 y hoy se renueva.',
+    facts: [['22', 'puntos 360°'], ['20–30 min', 'a pie'], ['Baja', 'dificultad']] },
+  { id: 'batros', name: 'Humedal Los Batros', place: 'San Pedro de la Paz · santuario', color: 'var(--blue)', hex: '#4E7CDD',
+    url: 'https://ggalanc1983.github.io/LosBatros/', img: 'c_batros.jpg', at: [-36.8355, -73.1240], label: 'Los Batros', dx: 0, dy: 30, anchor: 'middle',
+    desc: 'Pasarelas de madera sobre totorales y espejos de agua, entre la Laguna Grande y el río Biobío. Refugio de cisnes de cuello negro y más de 70 especies de aves.',
+    facts: [['36', 'puntos 360°'], ['45–60 min', 'a pie'], ['Fácil', 'accesible']] },
+];
+const GEO = {"land":[[[-73.5,-37.0253],[-73.5,-37.0408],[-73.4949,-37.042],[-73.4821,-37.0539],[-73.4783,-37.0551],[-73.4757,-37.0515],[-73.4757,-37.0301],[-73.477,-37.0277],[-73.4808,-37.0253]],[[-73.0536,-36.6021],[-73.0561,-36.6009],[-73.0689,-36.6009],[-73.0727,-36.6033],[-73.074,-36.6056],[-73.074,-36.6116],[-73.083,-36.6223],[-73.083,-36.6365],[-73.0804,-36.6401],[-73.0779,-36.6413],[-73.0638,-36.6413],[-73.06,-36.6389],[-73.0587,-36.6365],[-73.0587,-36.614],[-73.0523,-36.6044]],[[-72.35,-36.35],[-72.8655,-36.35],[-72.8655,-36.3548],[-72.8809,-36.3702],[-72.8821,-36.3726],[-72.8821,-36.3869],[-72.8911,-36.3976],[-72.8911,-36.4285],[-72.8975,-36.4368],[-72.9141,-36.4534],[-72.9154,-36.4558],[-72.9154,-36.4618],[-72.9244,-36.4725],[-72.9244,-36.5034],[-72.9256,-36.5058],[-72.9308,-36.5093],[-72.9359,-36.5093],[-72.9384,-36.5105],[-72.9499,-36.5212],[-72.9499,-36.5367],[-72.9512,-36.539],[-72.9563,-36.5426],[-72.9615,-36.5426],[-72.964,-36.5414],[-72.9679,-36.5367],[-72.9679,-36.5307],[-72.9602,-36.5212],[-72.9615,-36.5188],[-72.964,-36.5176],[-72.9781,-36.5176],[-72.9806,-36.5188],[-72.9909,-36.5307],[-72.9909,-36.5616],[-72.9947,-36.5664],[-72.9973,-36.5676],[-73.0024,-36.5676],[-73.0049,-36.5688],[-73.0062,-36.5712],[-73.0011,-36.5783],[-72.9909,-36.589],[-72.9909,-36.6033],[-72.9896,-36.6056],[-72.9858,-36.608],[-72.9806,-36.608],[-72.9781,-36.6092],[-72.9742,-36.614],[-72.9742,-36.6365],[-72.9896,-36.6532],[-72.9909,-36.6556],[-72.9909,-36.6615],[-72.9986,-36.671],[-72.9909,-36.6805],[-72.9909,-36.7031],[-73.0062,-36.7198],[-73.0088,-36.7305],[-73.0139,-36.734],[-73.0612,-36.734],[-73.0727,-36.7257],[-73.1022,-36.7257],[-73.1073,-36.7222],[-73.1086,-36.7198],[-73.1086,-36.6972],[-73.1009,-36.6865],[-73.1009,-36.6389],[-73.0932,-36.6306],[-73.0932,-36.6282],[-73.1111,-36.6104],[-73.1137,-36.6092],[-73.1278,-36.6092],[-73.1303,-36.6104],[-73.1329,-36.614],[-73.1329,-36.6282],[-73.1405,-36.6389],[-73.1405,-36.6532],[-73.1495,-36.6639],[-73.1495,-36.6865],[-73.1661,-36.7055],[-73.1661,-36.7115],[-73.1648,-36.7138],[-73.1546,-36.7233],[-73.1521,-36.7245],[-73.1469,-36.7245],[-73.1418,-36.7281],[-73.1405,-36.7305],[-73.1405,-36.7364],[-73.1418,-36.7388],[-73.1508,-36.7471],[-73.1508,-36.7483],[-73.1636,-36.759],[-73.1687,-36.759],[-73.1712,-36.7578],[-73.1776,-36.7519],[-73.1802,-36.7507],[-73.1853,-36.7507],[-73.1956,-36.7436],[-73.1981,-36.7447],[-73.2007,-36.7483],[-73.2045,-36.7507],[-73.2058,-36.7531],[-73.2263,-36.7721],[-73.2314,-36.7792],[-73.2301,-36.7816],[-73.2275,-36.7828],[-73.2058,-36.7828],[-73.2032,-36.784],[-73.1917,-36.7947],[-73.1892,-36.8054],[-73.1725,-36.822],[-73.1661,-36.8304],[-73.1661,-36.9195],[-73.1738,-36.9302],[-73.1738,-36.9445],[-73.1815,-36.9528],[-73.1828,-36.9552],[-73.1828,-36.9611],[-73.1904,-36.9718],[-73.1904,-36.9778],[-73.1994,-36.9885],[-73.1994,-37.0111],[-73.1879,-37.023],[-73.1853,-37.0242],[-73.1725,-37.0242],[-73.17,-37.0253],[-73.1585,-37.036],[-73.1572,-37.0384],[-73.1572,-37.061],[-73.161,-37.0658],[-73.1712,-37.0681],[-73.1828,-37.08],[-73.1828,-37.086],[-73.1738,-37.0967],[-73.1738,-37.1193],[-73.1892,-37.1359],[-73.1904,-37.1383],[-73.1904,-37.1442],[-73.1981,-37.1526],[-73.2007,-37.1633],[-73.2109,-37.174],[-73.2224,-37.1763],[-73.2429,-37.1966],[-73.2429,-37.1977],[-73.2467,-37.2001],[-73.248,-37.2025],[-73.2621,-37.2156],[-73.2646,-37.2168],[-73.2774,-37.2168],[-73.2889,-37.2251],[-73.3107,-37.2251],[-73.3222,-37.2334],[-73.3529,-37.2334],[-73.3644,-37.2417],[-73.4028,-37.2417],[-73.4143,-37.2334],[-73.436,-37.2334],[-73.4412,-37.2298],[-73.4424,-37.2275],[-73.4424,-37.2215],[-73.4501,-37.2108],[-73.4501,-37.2049],[-73.4514,-37.2025],[-73.4552,-37.2001],[-73.5,-37.2001],[-73.5,-37.3],[-72.35,-37.3]]],"coyan":[[-36.824444,-72.731111],[-36.824306,-72.731583],[-36.824222,-72.731472],[-36.82425,-72.731528],[-36.824417,-72.731944],[-36.823972,-72.731806],[-36.823778,-72.731667],[-36.82375,-72.731528],[-36.823806,-72.731722],[-36.823778,-72.731611],[-36.8235,-72.731028],[-36.823556,-72.730889],[-36.823556,-72.731028],[-36.823722,-72.730972],[-36.82375,-72.730944],[-36.823667,-72.730917],[-36.823722,-72.730972],[-36.824111,-72.731111],[-36.824306,-72.731222],[-36.824306,-72.731222],[-36.824472,-72.731111],[-36.824444,-72.731167]],"batros":[[-36.83645,-73.1232556],[-36.8364667,-73.1235556],[-36.8363806,-73.1234194],[-36.836475,-73.1235111],[-36.8364583,-73.1235833],[-36.8364306,-73.1235944],[-36.8362306,-73.1236667],[-36.8362417,-73.1235917],[-36.8362583,-73.1242],[-36.8362889,-73.1241528],[-36.8356528,-73.1240139],[-36.8354806,-73.1242111],[-36.8355222,-73.1239222],[-36.8353917,-73.124],[-36.8350972,-73.1241278],[-36.8348806,-73.1242167],[-36.8348694,-73.1242556],[-36.8348056,-73.1242972],[-36.8345917,-73.1241861],[-36.8345722,-73.1242028],[-36.8340333,-73.1243861],[-36.8339056,-73.1244083],[-36.83415,-73.1244972],[-36.8334528,-73.1246583],[-36.8332806,-73.1247111],[-36.8335139,-73.124675],[-36.8330472,-73.1246444],[-36.8330472,-73.1246444],[-36.8332528,-73.1243694],[-36.8335833,-73.1240389],[-36.8343528,-73.1236861],[-36.8350167,-73.1239],[-36.8354111,-73.1238056],[-36.8356528,-73.1239472],[-36.8361083,-73.1237139],[-36.8360806,-73.1236667]]};
+const CITIES = [['Concepción', -36.827, -73.050], ['Talcahuano', -36.724, -73.116], ['San Pedro de la Paz', -36.857, -73.090, 1],
+  ['Penco', -36.738, -72.996], ['Tomé', -36.617, -72.957], ['Lirquén', -36.71, -72.975], ['Chiguayante', -36.925, -73.029], ['Hualqui', -36.976, -72.937],
+  ['Coronel', -37.027, -73.149], ['Florida', -36.822, -72.663]];
+
+const $ = s => document.querySelector(s);
+const LA0 = -36.55, LA1 = -37.12, LO0 = -73.32, LO1 = -72.56, K = Math.cos(-36.85 * Math.PI / 180);
+const VW = 760, VH = Math.round(VW * (LA0 - LA1) / ((LO1 - LO0) * K));
+const P = (lat, lon) => [((lon - LO0) / (LO1 - LO0)) * VW, ((LA0 - lat) / (LA0 - LA1)) * VH];
+function smooth(pts) {        // curvas suaves entre puntos del contorno
+  const q = pts.map(([lo, la]) => P(la, lo)); let d = '';
+  for (let i = 0; i < q.length; i++) {
+    const a = q[i], b = q[(i + 1) % q.length], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    d += i === 0 ? `M${m[0].toFixed(1)} ${m[1].toFixed(1)}` : ` Q${a[0].toFixed(1)} ${a[1].toFixed(1)} ${m[0].toFixed(1)} ${m[1].toFixed(1)}`;
+  }
+  return d + 'Z';
+}
+function drawMap() {
+  const s = $('#map'); s.setAttribute('viewBox', `0 0 ${VW} ${VH}`); s.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  let g = '';
+  for (let x = 40; x < VW; x += 80) g += `<line class="grid" x1="${x}" y1="0" x2="${x}" y2="${VH}"/>`;
+  for (let y = 40; y < VH; y += 80) g += `<line class="grid" x1="0" y1="${y}" x2="${VW}" y2="${y}"/>`;
+  const land = GEO.land.map(p => `<path class="land" d="${smooth(p)}"/>`).join('');
+  const [sx, sy] = P(-36.98, -73.31);
+  const cities = CITIES.map(([n, la, lo, below]) => { const [x, y] = P(la, lo);
+    return `<g class="city"><circle cx="${x}" cy="${y}" r="3.2"/><text x="${x + 7}" y="${y + (below ? 16 : 4)}">${n}</text></g>`; }).join('');
+  const pins = TOURS.map(t => { const [x, y] = P(...t.at);
+    return `<g class="pin" data-id="${t.id}" tabindex="0" role="button" aria-label="Ver circuito ${t.name}">
+      <circle class="halo" cx="${x}" cy="${y}" r="16" fill="${t.hex}"/>
+      <circle class="dot" cx="${x}" cy="${y}" r="9" fill="${t.hex}" stroke="#ffffff" stroke-width="3"/>
+      <text x="${x + t.dx}" y="${y + t.dy}" fill="${t.hex}" text-anchor="${t.anchor || (t.dx < 0 ? 'end' : 'start')}">${t.label}</text></g>`; }).join('');
+  const km = 10 / ((LO1 - LO0) * 111.32 * K) * VW;
+  const scale = `<g transform="translate(${VW - km - 30} ${VH - 28})"><line x1="0" y1="0" x2="${km}" y2="0" stroke="#666666" stroke-width="2"/><line x1="0" y1="-5" x2="0" y2="5" stroke="#666666" stroke-width="2"/><line x1="${km}" y1="-5" x2="${km}" y2="5" stroke="#666666" stroke-width="2"/><text x="${km / 2}" y="-9" text-anchor="middle" style="font:600 12px Lato,sans-serif;fill:#666666">10 km</text></g>
+    <g transform="translate(34 40)"><path d="M0 -16 L8 6 L0 1 L-8 6 Z" fill="#1A1A1A"/><text x="-5" y="22" style="font:800 13px Lato,sans-serif;fill:#1A1A1A">N</text></g>`;
+  s.innerHTML = g + land + `<text class="sea" x="${sx}" y="${sy}">OCÉANO PACÍFICO</text>` + cities + pins + scale;
+  s.querySelectorAll('.pin').forEach(p => { p.addEventListener('click', () => select(p.dataset.id)); p.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(p.dataset.id); } }); });
+}
+function drawInset(t) {
+  const pts = GEO[t.id], lat0 = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+  const m = pts.map(([la, lo]) => [(lo - pts[0][1]) * 111320 * Math.cos(lat0 * Math.PI / 180), (la - pts[0][0]) * 110574]);
+  const xs = m.map(p => p[0]), ys = m.map(p => p[1]);
+  const S = Math.min(200 / (Math.max(...xs) - Math.min(...xs) || 1), 160 / (Math.max(...ys) - Math.min(...ys) || 1));
+  const ox = 120 - (Math.min(...xs) + Math.max(...xs)) / 2 * S, oy = 100 + (Math.min(...ys) + Math.max(...ys)) / 2 * S;
+  const q = m.map(([x, y]) => [ox + x * S, oy - y * S]);
+  const line = q.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const bar = (t.id === 'coyan' ? 20 : 100) * S;
+  $('#insetSvg').innerHTML = `<path d="${line}" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${line}" fill="none" stroke="${t.hex}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1 5"/>
+    ${q.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i === 0 ? 5.5 : 3.6}" fill="${i === 0 ? '#F1B634' : t.hex}" stroke="#1A1A1A" stroke-width="1.4"/>`).join('')}
+    <text x="${q[0][0] + 8}" y="${q[0][1] - 6}" style="font:700 10px Lato,sans-serif;fill:#1A1A1A;paint-order:stroke;stroke:#fff;stroke-width:3px">Inicio</text>
+    <g transform="translate(12 190)"><line x1="0" y1="0" x2="${bar}" y2="0" stroke="#666666" stroke-width="2"/><text x="${bar / 2}" y="-5" text-anchor="middle" style="font:600 9px Lato,sans-serif;fill:#666666">${t.id === 'coyan' ? 20 : 100} m</text></g>`;
+  $('#insetTitle').innerHTML = `${t.name}<small>${pts.length} puntos</small>`;
+}
+function select(id) {
+  const t = TOURS.find(x => x.id === id);
+  document.querySelectorAll('.pin').forEach(p => p.classList.toggle('on', p.dataset.id === id));
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('on', c.dataset.id === id));
+  drawInset(t); $('#inset').hidden = false;
+}
+$('#insetClose').addEventListener('click', () => { $('#inset').hidden = true; document.querySelectorAll('.pin,.card').forEach(e => e.classList.remove('on')); });
+$('#cards').innerHTML = TOURS.map(t => `
+  <article class="card" data-id="${t.id}" style="--c:${t.color}">
+    <img src="${t.img}" alt="Vista del recorrido ${t.name}" loading="lazy">
+    <div class="body">
+      <span class="tag"><i></i>${t.place}</span>
+      <h2>${t.name}</h2>
+      <p class="desc">${t.desc}</p>
+      <ul class="facts">${t.facts.map(([v, l]) => `<li><b>${v}</b><span>${l}</span></li>`).join('')}</ul>
+      <div class="actions">
+        <a class="btn" href="${t.url}"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>Entrar al recorrido</a>
+        <button class="ghost" data-show="${t.id}">Ver en el mapa</button>
+      </div>
+    </div>
+  </article>`).join('');
+document.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => { select(b.dataset.show); $('.mapbox').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }));
+drawMap();
+}
+</script>
+</body>
+</html>
